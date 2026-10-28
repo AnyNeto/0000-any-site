@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030604">
+<title>00:00 ANY</title>
+
+<style>
+:root {
+    --green: #39ff78;
+    --muted: #718478;
+    --bg: #030604;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    min-height: 100%;
+    width: 100%;
+}
+
+body {
+    min-height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+    color: #f0f5f1;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+#matrix {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: .22;
+    pointer-events: none;
+}
+
+body:after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse at center,
+        #030604 0%,
+        rgba(3,6,4,.94) 38%,
+        rgba(3,6,4,.52) 100%
+    );
+}
+
+.page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+}
+
+.content {
+    width: 100%;
+    max-width: 700px;
+    text-align: center;
+    animation: appear 1.2s ease both;
+}
+
+h1 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(48px, 10vw, 86px);
+    font-weight: 500;
+    letter-spacing: -3px;
+    line-height: 1.1;
+}
+
+h1 span {
+    color: var(--green);
+    font-weight: 700;
+}
+
+.divider {
+    width: 46px;
+    height: 1px;
+    margin: 40px auto;
+    background: var(--green);
+    opacity: .65;
+}
+
+.countdown {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.number {
+    display: block;
+    color: #f4f7f4;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(34px, 7vw, 58px);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -2px;
+}
+
+.label {
+    display: block;
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 2px;
+}
+
+.date {
+    margin-top: 32px;
+    color: var(--green);
+    font-size: 11px;
+    letter-spacing: 3px;
+}
+
+.bottom {
+    position: absolute;
+    bottom: 26px;
+    left: 34px;
+    right: 34px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #526958;
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.smile {
+    color: var(--green);
+    font-size: 16px;
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media(max-width: 500px) {
+    .countdown {
+        gap: 7px;
+    }
+
+    .number {
+        font-size: clamp(28px, 8vw, 42px);
+    }
+
+    .label {
+        font-size: 7px;
+        letter-spacing: 1px;
+    }
+
+    .date {
+        font-size: 9px;
+        letter-spacing: 2px;
+    }
+
+    .bottom {
+        left: 16px;
+        right: 16px;
+        bottom: 18px;
+        font-size: 8px;
+    }
+
+    .divider {
+        margin: 30px auto;
+    }
+}
+
+@media(prefers-reduced-motion: reduce) {
+    *, *:before, *:after {
+        animation: none !important;
+    }
+}
+</style>
+</head>
+
+<body>
+<canvas id="matrix" aria-hidden="true"></canvas>
+
+<div class="page">
+    <main class="content">
+        <h1>00:00 <span>ANY</span></h1>
+
+        <div class="divider"></div>
+
+        <section class="countdown" aria-label="Countdown">
+            <div>
+                <span class="number" id="days">00</span>
+                <span class="label">DAYS</span>
+            </div>
+
+            <div>
+                <span class="number" id="hours">00</span>
+                <span class="label">HOURS</span>
+            </div>
+
+            <div>
+                <span class="number" id="minutes">00</span>
+                <span class="label">MINUTES</span>
+            </div>
+
+            <div>
+                <span class="number" id="seconds">00</span>
+                <span class="label">SECONDS</span>
+            </div>
+        </section>
+
+        <p class="date">01.11.2026 — 00:00</p>
+    </main>
+
+    <footer class="bottom">
+        <span>00:00 ANY — 2026</span>
+        <span class="smile">:)</span>
+    </footer>
+</div>
+
+<script>
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+
+const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZアイウエオカキクケコ#$%";
+const fontSize = 15;
+
+let columns = 0;
+let drops = [];
+
+function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    canvas.style.width = innerWidth + "px";
+    canvas.style.height = innerHeight + "px";
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    columns = Math.ceil(innerWidth / fontSize);
+    drops = Array.from(
+        { length: columns },
+        () => Math.random() * -100
+    );
+}
+
+function draw() {
+    ctx.fillStyle = "rgba(3,6,4,.12)";
+    ctx.fillRect(0, 0, innerWidth, innerHeight);
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < columns; i++) {
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+
+        ctx.fillStyle = Math.random() > .96
+            ? "#baffca"
+            : "#00d94b";
+
+        ctx.fillText(char, x, y);
+
+        if (y > innerHeight && Math.random() > .975) {
+            drops[i] = Math.random() * -20;
+        } else {
+            drops[i] += .45;
+        }
+    }
+}
+
+let lastFrame = 0;
+
+function animate(time) {
+    if (time - lastFrame > 55) {
+        draw();
+        lastFrame = time;
+    }
+
+    requestAnimationFrame(animate);
+}
+
+resize();
+addEventListener("resize", resize);
+requestAnimationFrame(animate);
+
+// Contagem regressiva para 1 de novembro de 2026, à meia-noite no Brasil.
+const target = Date.parse("2026-11-01T03:00:00Z");
+
+function updateTimer() {
+    let remaining = Math.max(0, target - Date.now());
+
+    const days = Math.floor(remaining / 86400000);
+    remaining %= 86400000;
+
+    const hours = Math.floor(remaining / 3600000);
+    remaining %= 3600000;
+
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+
+    document.getElementById("days").textContent =
+        String(days).padStart(2, "0");
+
+    document.getElementById("hours").textContent =
+        String(hours).padStart(2, "0");
+
+    document.getElementById("minutes").textContent =
+        String(minutes).padStart(2, "0");
+
+    document.getElementById("seconds").textContent =
+        String(seconds).padStart(2, "0");
+}
+
+updateTimer();
+setInterval(updateTimer, 250);
+</script>
+</body>
+</html>
